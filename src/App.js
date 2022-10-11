@@ -11,6 +11,7 @@ function App() {
   const [tenzies, setTenzies] = React.useState(false)
   const [time, setTime] = React.useState(0);
   const [stopwatchIsRunning, setStopwatchIsRunning] = React.useState(false)
+  const [bestTime , setBestTime] = React.useState(() => localStorage.getItem("bestTime") || "")
 
   React.useEffect(() => {
     const allHeld = dice.every(die=>die.isHeld)
@@ -19,9 +20,13 @@ function App() {
     if (allHeld && allSameValue) {
       setTenzies(true)
       setStopwatchIsRunning(false)
+      if (time < bestTime || bestTime === "") {
+        localStorage.setItem("bestTime", time)
+        setBestTime(time)
+      }
       console.log("You won!")
     }
-  }, [dice])
+  }, [dice, bestTime, time])
 
   function generateNewDie() {
     return {
@@ -68,10 +73,18 @@ function App() {
 
   const diceElements = dice.map(die=> <Die 
                                         key={die.id} 
-                                        value={die.value} 
+                                        value={die.value}
                                         isHeld={die.isHeld}
                                         holdDice={()=>holdDice(die.id)}
                                       />)
+
+  function representBestTime() {
+    let m = ("0" + Math.floor((bestTime / 60000) % 60)).slice(-2)
+    let s = ("0" + Math.floor((bestTime / 1000) % 60)).slice(-2)
+    let ms = ("0" + ((bestTime / 10) % 100)).slice(-2)
+    return `${m}:${s}:${ms}`
+  }
+
   return (
       <main>
           {tenzies && <Confetti />}
@@ -87,7 +100,10 @@ function App() {
         >
             {(tenzies || dice[0].value==="S") ? "New Game" : "Roll"}
         </button>
-            <Stopwatch running={stopwatchIsRunning} time={time} setTime={setTime} />
+            <div className="time">
+                {bestTime!=="" && <div className="best-time">Best time: {representBestTime()}</div>}
+                <Stopwatch running={stopwatchIsRunning} time={time} setTime={setTime} />
+            </div>
       </main>
   );
 }
